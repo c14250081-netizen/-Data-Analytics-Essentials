@@ -1,0 +1,74 @@
+# Eksplorasi Data Indonesia Reading Interest dengan Metode IQR
+
+## 1. Cara Kerja IQR (Interquartile Range)
+
+Metode **IQR (Interquartile Range)** digunakan untuk mendeteksi dan
+menghapus outlier (data pencilan).\
+Langkah-langkahnya: 1. Urutkan data dan hitung **Q1** (kuartil 25%)
+serta **Q3** (kuartil 75%). 2. Hitung **IQR = Q3 - Q1**. 3. Tentukan
+batas bawah dan atas: - Lower Bound = Q1 - 1.5 × IQR - Upper Bound =
+Q3 + 1.5 × IQR 4. Data di luar batas tersebut dianggap **outlier**. 5.
+Hapus outlier agar distribusi lebih representatif.
+
+------------------------------------------------------------------------
+
+## 2. Eksperimen Outlier Removal
+
+Selain metode standar IQR dengan k=1.5, bisa juga diuji: - **IQR dengan
+variasi k** (misalnya 1.0, 1.5, 2.0). - **Z-score** dengan threshold
+(misalnya 3).
+
+### Contoh Kode Eksperimen
+
+``` python
+from scipy import stats
+
+# Fungsi IQR dengan parameter k
+def remove_outliers_iqr_custom(data, col, k=1.5):
+    Q1 = data[col].quantile(0.25)
+    Q3 = data[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower = Q1 - k * IQR
+    upper = Q3 + k * IQR
+    print(f"[{col}] Q1={Q1:.2f}, Q3={Q3:.2f}, IQR={IQR:.2f}, lower={lower:.2f}, upper={upper:.2f}")
+    return data[(data[col] >= lower) & (data[col] <= upper)]
+
+# Fungsi Z-score
+def remove_outliers_zscore(data, col, threshold=3):
+    z_scores = np.abs(stats.zscore(data[col]))
+    return data[z_scores < threshold]
+
+# Visualisasi
+plt.figure(figsize=(15,4))
+
+# Sebelum
+plt.subplot(1,3,1)
+sns.histplot(df[col], bins=20, kde=True)
+plt.title("Asli (Dengan Outlier)")
+
+# Setelah IQR (k=1.5)
+df_iqr = remove_outliers_iqr_custom(df, col, k=1.5)
+plt.subplot(1,3,2)
+sns.histplot(df_iqr[col], bins=20, kde=True, color="orange")
+plt.title("IQR (k=1.5)")
+
+# Setelah Z-score
+df_z = remove_outliers_zscore(df, col, threshold=3)
+plt.subplot(1,3,3)
+sns.histplot(df_z[col], bins=20, kde=True, color="green")
+plt.title("Z-score (threshold=3)")
+
+plt.tight_layout()
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## 3. Kesimpulan
+
+-   **IQR** efektif untuk mendeteksi data yang terlalu jauh dari rentang
+    normal.
+-   **Z-score** bisa jadi alternatif terutama bila data berbentuk
+    distribusi normal.
+-   Penghapusan outlier membuat distribusi data *Reading Interest* lebih
+    rapat dan representatif.
